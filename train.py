@@ -84,7 +84,8 @@ def main():
     dalle = init_rudalle_module(fp16=False, device=_device, cache_dir=_args.cache_dir)
     if len (_args.resume_from) > 0:
         print(f'Loading model from {_args.resume_from}')
-        checkpoint = torch.load(os.path.join(_args.cache_dir, _args.resume_from), map_location='cpu')
+        assert os.path.exists(_args.resume_from), f'{_args.resume_from} does not exist'
+        checkpoint = torch.load(_args.resume_from, map_location='cpu')
         dalle.load_state_dict(checkpoint)
     dalle = dalle.to(_device).train()
 
@@ -117,8 +118,7 @@ def main():
 
         tqdm.write(f'{idx}/{len(dataset)}\tloss: {loss.item():.4f}')
         wandb.log({'loss': loss.item()})
-
-        if idx % 1000 == 0:
+        if idx % 100 == 0:
             torch.save(dalle.state_dict(), f'training/dalle_step{idx}.pt')
             # _pil_images, _scores = generate_images(texts[0], yttm_tokenizer, dalle, pretrained_vae, 2048, 0.995, 3)
             # save all pil images
@@ -126,6 +126,7 @@ def main():
             #     tqdm.write(f'{batch_idx}/{len(_pil_images)}')
             #     pil_image.save(f'outputs/{idx}_{batch_idx}.png')
             #     wandb.log({ "image": wandb.Image(pil_image, caption=f'{idx}_{batch_idx}_{_scores[batch_idx]}') })
+
 
 
 if __name__ == '__main__':
